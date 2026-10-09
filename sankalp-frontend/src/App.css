@@ -1,4 +1,30 @@
-/* Navigation Styles */
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: #0b1120;
+  color: #f8fafc;
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* Navbar */
 .navbar {
   position: sticky;
   top: 0;
@@ -9,9 +35,9 @@
 }
 
 .nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 2.5rem;
   height: 64px;
   display: flex;
   align-items: center;
@@ -75,7 +101,7 @@
   border-color: rgba(16, 185, 129, 0.6);
 }
 
-/* Hero Section Styles */
+/* Hero Section */
 .hero-section {
   position: relative;
   padding: 5rem 1.5rem;
@@ -130,6 +156,7 @@
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.75rem;
   background-color: #34d399;
@@ -176,4 +203,892 @@
   gap: 0.5rem;
   color: #94a3b8;
   font-size: 0.9rem;
+}
+
+/* Courses Section */
+.courses-section {
+  padding: 4rem 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.section-subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+}
+
+.year-dropdown {
+  background: transparent;
+  color: #f8fafc;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.year-dropdown option {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.course-card {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.course-image-container {
+  position: relative;
+  height: 180px;
+  width: 100%;
+}
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.course-price {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  background-color: #34d399;
+  color: #022c22;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.course-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.course-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.course-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.course-description {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  flex: 1;
+}
+
+.btn-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.65rem;
+  background-color: #1e293b;
+  color: #34d399;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.btn-card-action:hover {
+  background-color: rgba(52, 211, 153, 0.15);
+}
+
+/* Footer Styling */
+.footer {
+  background-color: #070c18;
+  border-top: 1px solid #1e293b;
+  padding: 4rem 2.5rem 1.5rem 2.5rem;
+  margin-top: 4rem;
+}
+
+.footer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-desc {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+  line-height: 1.6;
+}
+
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+}
+
+.footer-heading {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+.footer-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-list a {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
+}
+
+.footer-list a:hover {
+  color: #34d399;
+}
+
+.footer-action-text {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.btn-review-footer {
+  padding: 0.6rem 1.2rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-weight: 600;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-review-footer:hover {
+  background-color: rgba(16, 185, 129, 0.25);
+}
+
+.footer-bottom {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.footer-trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #94a3b8;
+}
+
+/* Modal Overlay & Card */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.modal-close:hover {
+  color: #ffffff;
+}
+
+.modal-title {
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.star-btn {
+  background: transparent;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #34d399;
+  outline: none;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.modal-success {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-icon {
+  width: 50px;
+  height: 50px;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 auto 1rem auto;
+}
+
+@media (max-width: 768px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+/* Course Detail Page */
+.course-detail-page {
+  padding: 3rem 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #34d399;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  transition: opacity 0.2s ease;
+}
+
+.btn-back:hover {
+  opacity: 0.8;
+}
+
+.detail-header {
+  margin-bottom: 2.5rem;
+}
+
+.detail-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0.5rem 0 0.75rem 0;
+}
+
+.detail-description {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  max-width: 800px;
+}
+
+/* 2 Main Section Buttons */
+.section-tabs {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.section-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  color: #94a3b8;
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.section-tab-btn:hover {
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #ffffff;
+}
+
+.section-tab-btn.active {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: #34d399;
+  color: #34d399;
+}
+
+/* Section Card */
+.section-content-card {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.content-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.item-name {
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.item-duration {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.enroll-banner {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.enroll-banner p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+/* Modules Accordion Component (Robot Vision & Module-Based Courses) */
+.modules-accordion-wrapper {
+  margin-top: 1.5rem;
+}
+
+.modules-header {
+  margin-bottom: 1.75rem;
+}
+
+.modules-title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.modules-subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.modules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.module-accordion-card {
+  background-color: #1e222d;
+  border: 1px solid #2d3343;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.module-accordion-card.open {
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.module-accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  background-color: #262a36;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.module-accordion-card.open .module-accordion-header {
+  background-color: #2b303e;
+}
+
+.module-accordion-header:hover {
+  background-color: #313747;
+}
+
+.module-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.module-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.module-title-text {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.module-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #94a3b8;
+}
+
+.module-parts-count {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.accordion-icon {
+  color: #cbd5e1;
+  transition: transform 0.2s ease;
+}
+
+.module-accordion-body {
+  padding: 1.5rem;
+  background-color: #171b24;
+  border-top: 1px solid #2d3343;
+}
+
+.module-parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.module-part-card {
+  background-color: #0b0d13;
+  border: 1px solid #242938;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  position: relative;
+}
+
+.module-part-card:hover {
+  transform: translateY(-2px);
+  border-color: #34d399;
+}
+
+.part-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.ppt-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ppt-filename {
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.part-card-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  letter-spacing: 0.3px;
+}
+
+.part-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid #1a202c;
+}
+
+.part-badge {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.item-subtopics {
+  margin: 0.25rem 0 0 1.2rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.item-subtopics li {
+  margin-bottom: 0.15rem;
+}
+
+/* Technical Drawing Blueprint Box for CAD PDFs */
+.blueprint-preview-box {
+  background-color: #0d1527;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.blueprint-tech-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.blueprint-crosshair {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #38bdf8;
+  border-radius: 50%;
+  position: relative;
+}
+
+.blueprint-crosshair::before,
+.blueprint-crosshair::after {
+  content: '';
+  position: absolute;
+  background-color: #38bdf8;
+}
+
+.blueprint-crosshair::before {
+  top: 50%;
+  left: -4px;
+  right: -4px;
+  height: 1px;
+}
+
+.blueprint-crosshair::after {
+  left: 50%;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+}
+
+.blueprint-label {
+  font-size: 0.68rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #38bdf8;
+  letter-spacing: 0.75px;
+  font-weight: 700;
+}
+
+.doc-format-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+.module-part-card.pdf-type {
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.module-part-card.pdf-type:hover {
+  border-color: #38bdf8;
+}
+
+/* PCB Differential Routing Circuit Preview */
+.pcb-preview-box {
+  margin: 0.5rem 0 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #15803d;
+  background-color: #042f1a;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+
+.pcb-board {
+  padding: 0.9rem;
+  background: radial-gradient(circle at 50% 50%, #064e28 0%, #022c16 100%);
+  position: relative;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pcb-trace {
+  height: 2px;
+  background: linear-gradient(90deg, #eab308 0%, #facc15 100%);
+  box-shadow: 0 0 4px rgba(234, 179, 8, 0.6);
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.trace-1 {
+  width: 75%;
+}
+
+.trace-2 {
+  width: 60%;
+  margin-left: 10px;
+}
+
+.pcb-pads {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.pcb-pad {
+  width: 10px;
+  height: 10px;
+  background-color: #eab308;
+  border-radius: 50%;
+  border: 2px solid #ca8a04;
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.8);
+}
+
+.pcb-labels {
+  display: flex;
+  gap: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #86efac;
+  letter-spacing: 0.5px;
+}
+
+.pcb-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #4ade80;
+  align-self: flex-end;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background-color: rgba(4, 47, 26, 0.7);
+}
+
+.module-part-card.pcb-type {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.module-part-card.pcb-type:hover {
+  border-color: #22c55e;
 }

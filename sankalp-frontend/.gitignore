@@ -6,6 +6,14 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Firebase CLI cache and admin secret keys
+.firebase/
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
 
 node_modules
 dist

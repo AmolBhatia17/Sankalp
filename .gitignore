@@ -20,13 +20,16 @@ dist
 dist-ssr
 *.local
 
+# Standalone side project (not part of the Sankalp app)
+lumina-academy/
+
 # Environment and sensitive keys
 .env
 .env.local
 .env.*.local
 *.env
 !.env.example
-
+.commandcode
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

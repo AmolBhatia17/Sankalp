@@ -1,25 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  X,
-  ShieldCheck,
-  Lock,
-  CreditCard,
-  CheckCircle2,
-  AlertCircle,
-  Sparkles,
-  FileText,
-  Video,
-  ExternalLink,
-} from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { createEnrollment } from '../lib/enrollments';
+import { Icon } from './ui';
+import { formatINR } from '../lib/format';
 
-// Helper to dynamically inject Razorpay checkout.js script
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
+const isRazorpayConfigured = Boolean(RAZORPAY_KEY && RAZORPAY_KEY.startsWith('rzp_'));
+
 function loadRazorpayScript() {
   return new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
+    if (window.Razorpay) return resolve(true);
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve(true);
@@ -28,246 +19,193 @@ function loadRazorpayScript() {
   });
 }
 
-export default function PaymentModal({
-  isOpen,
-  onClose,
-  course,
-  targetItem,
-  onPaymentSuccess,
-}) {
-  const { user } = useAuth();
+export default function PaymentModal({ isOpen, onClose, course, onSuccess }) {
+  const { user, displayName } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [phone, setPhone] = useState('');
-
-  const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-  const isRazorpayConfigured = Boolean(
-    razorpayKey && razorpayKey !== 'your_razorpay_key_id_here' && razorpayKey.startsWith('rzp_')
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      setError('');
-      loadRazorpayScript();
-    }
-  }, [isOpen]);
 
   if (!isOpen || !course) return null;
 
-  const handleRazorpayPayment = async () => {
-    setLoading(true);
-    setError('');
+  const price = course.price || 0;
 
-    const isLoaded = await loadRazorpayScript();
-    if (!isLoaded || !window.Razorpay) {
-      setError('Unable to initialize Razorpay checkout. Please check your internet connection.');
-      setLoading(false);
+  const recordEnrollment = (payment = {}) =>
+    createEnrollment(user.uid, course.id, {
+      userEmail: user.email,
+      amount: price,
+      paymentId: payment.paymentId,
+      orderId: payment.orderId,
+    });
+
+  const handlePay = async () => {
+    setError('');
+    if (!user) {
+      setError('Please sign in to enroll.');
       return;
     }
+    setLoading(true);
 
     try {
-      const options = {
-        key: razorpayKey,
-        amount: (course.price || 499) * 100, // Amount in paise
-        currency: 'INR',
-        name: 'Sankalp Education',
-        description: `Enrollment: ${course.title}`,
-        image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=200&auto=format&fit=crop',
-        prefill: {
-          name: user?.displayName || '',
-          email: user?.email || '',
-          contact: phone || '',
-        },
-        theme: {
-          color: '#059669', // Emerald accent
-        },
-        handler: function (response) {
-          setLoading(false);
-          onPaymentSuccess?.({
-            paymentId: response.razorpay_payment_id,
-            orderId: response.razorpay_order_id,
-            signature: response.razorpay_signature,
-            amount: course.price,
-          });
-          onClose();
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(false);
-          },
-        },
-      };
+      // No gateway key configured — record entitlement directly (dev only).
+      if (!isRazorpayConfigured) {
+        await recordEnrollment({ paymentId: `dev_${Date.now()}`, orderId: '' });
+        onSuccess?.();
+        onClose();
+        return;
+      }
 
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
+      const loaded = await loadRazorpayScript();
+      if (!loaded || !window.Razorpay) {
+        throw new Error('Could not load the Razorpay checkout. Check your connection.');
+      }
+
+      const orderRes = await fetch(`${API_BASE}/razorpay/order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: price, courseId: course.id }),
+      });
+      if (!orderRes.ok) {
+        throw new Error('Could not create the payment order. Is the payment server running?');
+      }
+      const order = await orderRes.json();
+
+      await new Promise((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: RAZORPAY_KEY,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'Sankalp',
+          description: `Enrollment: ${course.title}`,
+          order_id: order.orderId,
+          prefill: { name: displayName || '', email: user.email || '' },
+          theme: { color: '#3525cd' },
+          handler: async (response) => {
+            try {
+              const verifyRes = await fetch(`${API_BASE}/razorpay/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId: response.razorpay_order_id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                }),
+              });
+              const verified = await verifyRes.json();
+              if (!verifyRes.ok || !verified.verified) {
+                throw new Error('Payment signature verification failed.');
+              }
+              await recordEnrollment({
+                paymentId: response.razorpay_payment_id,
+                orderId: response.razorpay_order_id,
+              });
+              onSuccess?.();
+              onClose();
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          },
+          modal: { ondismiss: () => reject(new Error('Payment cancelled.')) },
+        });
+        rzp.on('payment.failed', (resp) =>
+          reject(new Error(resp?.error?.description || 'Payment failed.'))
+        );
+        rzp.open();
+      });
     } catch (err) {
-      console.error('Razorpay payment error:', err);
-      setError('Payment gateway error. Please try again.');
+      setError(err.message || 'Payment could not be completed.');
+    } finally {
       setLoading(false);
     }
-  };
-
-  const handleSimulatedPayment = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onPaymentSuccess?.({
-        paymentId: `pay_test_${Date.now().toString(36)}`,
-        orderId: `order_test_${Date.now().toString(36)}`,
-        amount: course.price,
-      });
-      onClose();
-    }, 900);
   };
 
   return (
-    <div className="payment-overlay" onClick={onClose}>
-      <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Close Button */}
-        <button className="payment-close-btn" onClick={onClose} aria-label="Close modal">
-          <X size={20} />
-        </button>
-
-        {/* Modal Header */}
-        <div className="payment-header">
-          <div className="payment-badge-tag">
-            <Sparkles size={14} />
-            <span>Course Access Required</span>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse/60 p-4 backdrop-blur-sm animate-in"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Complete enrollment"
+        className="custom-scrollbar max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-line bg-card p-7 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1 text-xs font-semibold text-primary-accent">
+              <Icon name="lock" className="text-sm" /> Enrollment required
+            </span>
+            <h2 className="mt-3 font-display text-xl font-bold">Unlock full course access</h2>
           </div>
-          <h2 className="payment-title">Unlock Full Syllabus & Materials</h2>
-          <p className="payment-subtitle">
-            Secure enrollment is required to access official PDF spec sheets, CAD drawings, and slide decks for <strong>{course.title}</strong>.
-          </p>
+          <button onClick={onClose} aria-label="Close">
+            <Icon name="close" className="text-on-surface-variant" />
+          </button>
         </div>
 
-        {/* Target Item Hint (if user clicked a specific PDF/PPTX) */}
-        {targetItem && (
-          <div className="payment-target-preview">
-            <div className="target-icon">
-              {targetItem.type === 'pdf' ? <FileText size={18} color="#ef4444" /> : <FileText size={18} color="#f97316" />}
-            </div>
-            <div className="target-details">
-              <span className="target-label">Requested Document</span>
-              <span className="target-filename">{targetItem.file || targetItem.name || targetItem.title}</span>
-            </div>
-            <Lock size={16} className="target-lock" />
+        <p className="text-sm text-on-surface-variant">
+          Get lifetime access to every lecture, lab and downloadable resource for{' '}
+          <strong className="text-on-surface">{course.title}</strong>.
+        </p>
+
+        <div className="mt-5 rounded-2xl border border-line bg-surface-low p-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-on-surface-variant">Course fee</span>
+            <span className="font-display text-lg font-bold text-primary-accent">{formatINR(price)}</span>
           </div>
+          {course.originalPrice > price && (
+            <div className="mt-1 flex items-center justify-between text-xs">
+              <span className="text-on-surface-variant">Academic grant applied</span>
+              <span className="font-semibold text-secondary">
+                −{formatINR(course.originalPrice - price)}
+              </span>
+            </div>
+          )}
+          <div className="my-3 h-px bg-surface-highest" />
+          <div className="flex items-center justify-between text-sm font-semibold">
+            <span>Total payable</span>
+            <span>{formatINR(price)}</span>
+          </div>
+        </div>
+
+        {user?.email && (
+          <p className="mt-3 text-xs text-on-surface-variant">
+            Access will be linked to <strong>{user.email}</strong>.
+          </p>
         )}
 
-        {/* What's Included Card */}
-        <div className="payment-benefits-card">
-          <h4 className="benefits-title">What you'll get with enrollment:</h4>
-          <ul className="benefits-list">
-            <li>
-              <CheckCircle2 size={16} color="#34d399" />
-              <span>Full access to all {course.modulesCount || 5} module presentation decks (.pptx)</span>
-            </li>
-            <li>
-              <CheckCircle2 size={16} color="#34d399" />
-              <span>Downloadable 2D/3D mechanical drawings & PDF specification sheets</span>
-            </li>
-            <li>
-              <CheckCircle2 size={16} color="#34d399" />
-              <span>Structured video lecture series aligned with academic exams</span>
-            </li>
-            <li>
-              <CheckCircle2 size={16} color="#34d399" />
-              <span>Lifetime access on account <strong>{user?.email}</strong></span>
-            </li>
-          </ul>
-        </div>
-
-        {/* Price & Billing Summary */}
-        <div className="payment-price-box">
-          <div className="price-row">
-            <span>Course Fee ({course.title})</span>
-            <span className="price-amount">₹{course.price || 499}</span>
-          </div>
-          <div className="price-row secondary">
-            <span>Access Term</span>
-            <span>Lifetime Academic Access</span>
-          </div>
-          <div className="price-divider" />
-          <div className="price-row total">
-            <span>Total Payable</span>
-            <span className="price-total-amount">₹{course.price || 499}</span>
-          </div>
-        </div>
-
-        {/* Gateway Notice / Status */}
-        {isRazorpayConfigured ? (
-          <div className="gateway-status live">
-            <ShieldCheck size={16} color="#34d399" />
-            <span>Secured with Razorpay 256-bit SSL Payment Gateway</span>
-          </div>
-        ) : (
-          <div className="gateway-status test">
-            <AlertCircle size={16} color="#f59e0b" />
-            <div>
-              <strong>Razorpay Sandbox / Test Mode</strong>
-              <p>Key ID not yet detected in .env. You can simulate instant unlock or connect your Razorpay Key ID.</p>
-            </div>
+        {!isRazorpayConfigured && (
+          <div className="mt-4 flex gap-2 rounded-xl bg-warn-container px-3 py-2 text-xs text-warn">
+            <Icon name="info" className="text-base" />
+            <span>Razorpay key not configured — enrolling will record access directly (dev mode).</span>
           </div>
         )}
 
         {error && (
-          <div className="payment-error-box">
-            <AlertCircle size={16} />
+          <div className="mt-4 flex gap-2 rounded-xl bg-error-container px-3 py-2 text-sm text-error">
+            <Icon name="error" className="text-base" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Action Button */}
-        <div className="payment-actions">
-          {isRazorpayConfigured ? (
-            <button
-              className="btn-pay-razorpay"
-              onClick={handleRazorpayPayment}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="payment-spinner" />
-              ) : (
-                <>
-                  <Lock size={16} />
-                  <span>Pay ₹{course.price || 499} via Razorpay</span>
-                </>
-              )}
-            </button>
-          ) : (
-            <div className="dual-pay-buttons">
-              <button
-                className="btn-pay-razorpay"
-                onClick={handleSimulatedPayment}
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="payment-spinner" />
-                ) : (
-                  <>
-                    <CreditCard size={16} />
-                    <span>Simulate Test Payment (Unlock Now)</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={handlePay}
+          disabled={loading}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60"
+        >
+          <Icon name="lock" className="text-base" />
+          {loading ? 'Processing…' : `Pay ${formatINR(price)} securely`}
+        </button>
 
-        {/* Security Trust Badges */}
-        <div className="payment-security-footer">
-          <div className="security-item">
-            <ShieldCheck size={14} />
-            <span>100% Secure Payment</span>
-          </div>
-          <div className="security-item">
-            <Lock size={14} />
-            <span>Encrypted Checkout</span>
-          </div>
-          <div className="security-item">
-            <CheckCircle2 size={14} />
-            <span>Instant Unlocking</span>
-          </div>
+        <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
+          <span className="inline-flex items-center gap-1">
+            <Icon name="shield" className="text-sm" /> Secure
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Icon name="encrypted" className="text-sm" /> Encrypted
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Icon name="bolt" className="text-sm" /> Instant access
+          </span>
         </div>
       </div>
     </div>

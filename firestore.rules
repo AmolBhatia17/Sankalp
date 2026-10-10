@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isInstructor() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'instructor';
+    }
+
+    // User profile documents + per-user content (bookmarks, notes, notifications, credentials)
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+
+      match /{sub=**} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+    }
+
+    // Public instructor profiles
+    match /instructors/{uid} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Courses: public read; instructors manage; anyone signed-in may bump aggregate counters
+    match /courses/{courseId} {
+      allow read: if true;
+      allow create, delete: if isInstructor();
+      allow update: if isInstructor()
+        || (isSignedIn()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['rating', 'reviewsCount', 'enrolledCount', 'updatedAt']));
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    // Enrollments: a user can read/write only their own
+    match /enrollments/{enrollmentId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Fellowship applications (write-only from the client, read by admins/console)
+    match /applications/{applicationId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // Site feedback (write-only from the client)
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if false;
+    }
+  }
+}

@@ -11,13 +11,28 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+let app = null;
+let authInstance = null;
+let googleProviderInstance = null;
 
-// Explicitly ensure session persistence across browser reloads
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn('Firebase persistence warning:', err);
-});
+if (firebaseConfig.apiKey) {
+  try {
+    app = initializeApp(firebaseConfig);
+    authInstance = getAuth(app);
+    // Explicitly ensure session persistence across browser reloads
+    setPersistence(authInstance, browserLocalPersistence).catch((err) => {
+      console.warn('Firebase persistence warning:', err);
+    });
+    googleProviderInstance = new GoogleAuthProvider();
+  } catch (error) {
+    console.warn('Firebase failed to initialize:', error);
+  }
+} else {
+  console.warn(
+    'Firebase API key is missing. Authentication features are disabled. Provide VITE_FIREBASE_API_KEY in .env to enable Firebase.'
+  );
+}
 
-export const googleProvider = new GoogleAuthProvider();
+export const auth = authInstance;
+export const googleProvider = googleProviderInstance;
 

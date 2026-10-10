@@ -43,6 +43,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   };
 
   const handleGoogle = async () => {
+    if (!auth || !googleProvider) {
+      setError("Authentication is not configured. Missing Firebase credentials.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -62,6 +66,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
   const handleEmail = async (e) => {
     e.preventDefault();
+    if (!auth) {
+      setError("Authentication is not configured. Missing Firebase credentials.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -78,6 +86,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       }
       onSuccess?.();
       onClose();
+    } catch (e) {
       console.warn("Auth error code:", e.code);
       const msg = {
         "auth/email-already-in-use": "This email is already registered. Please Sign In instead.",
@@ -101,6 +110,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    if (!auth) {
+      setError("Authentication is not configured. Missing Firebase credentials.");
+      return;
+    }
     if (!email.trim()) {
       setError("Please enter your registered email address.");
       return;

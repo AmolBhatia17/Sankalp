@@ -1,27 +1,11 @@
-# Logs
-logs
-*.log
+# Dependencies
+node_modules/
+*/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-firebase-debug.log*
-firestore-debug.log*
-ui-debug.log*
-
-# Firebase CLI cache and admin secret keys
-.firebase/
-*serviceAccountKey*.json
-*firebase-adminsdk*.json
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Standalone side project (not part of the Sankalp app)
-lumina-academy/
 
 # Environment and sensitive keys
 .env
@@ -29,12 +13,32 @@ lumina-academy/
 .env.*.local
 *.env
 !.env.example
-.commandcode
-# Editor directories and files
+
+# Build and production outputs
+dist/
+dist-ssr/
+build/
+*.local
+
+# Logs
+logs/
+*.log
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Firebase CLI and Service Account Keys
+.firebase/
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj

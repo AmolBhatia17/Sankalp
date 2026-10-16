@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,11 +15,13 @@ const firebaseConfig = {
 let app = null;
 let authInstance = null;
 let googleProviderInstance = null;
+let dbInstance = null;
 
 if (firebaseConfig.apiKey) {
   try {
     app = initializeApp(firebaseConfig);
     authInstance = getAuth(app);
+    dbInstance = getFirestore(app);
     // Explicitly ensure session persistence across browser reloads
     setPersistence(authInstance, browserLocalPersistence).catch((err) => {
       console.warn('Firebase persistence warning:', err);
@@ -29,10 +32,13 @@ if (firebaseConfig.apiKey) {
   }
 } else {
   console.warn(
-    'Firebase API key is missing. Authentication features are disabled. Provide VITE_FIREBASE_API_KEY in .env to enable Firebase.'
+    'Firebase API key is missing. Authentication and database features will use local mock data. Provide VITE_FIREBASE_API_KEY in .env to enable Firebase.'
   );
 }
 
+export { app };
 export const auth = authInstance;
 export const googleProvider = googleProviderInstance;
+export const db = dbInstance;
+
 

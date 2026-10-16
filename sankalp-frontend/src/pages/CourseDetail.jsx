@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockCourses } from '../data/mockCourses';
+import { useCourses } from '../hooks/useCourses';
 import {
   ArrowLeft,
   Folder,
@@ -21,16 +21,21 @@ import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
+import LectureModal from '../components/LectureModal';
 
 export default function CourseDetail() {
   const { id } = useParams();
-  const course = mockCourses.find((c) => c.id === id) || mockCourses[0];
+  const { courses, loading } = useCourses();
+  const course = useMemo(() => courses.find((c) => c.id === id) || courses[0] || {}, [courses, id]);
   const [activeTab, setActiveTab] = useState('course-material');
-  const [expandedModule, setExpandedModule] = useState(course.modules?.[0]?.id || 'cad-m0');
+  const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const expandedModule = selectedModuleId ?? course.modules?.[0]?.id ?? null;
 
   // Modals & Pending Actions
   const [authOpen, setAuthOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [lectureModalOpen, setLectureModalOpen] = useState(false);
+  const [activeLectureItem, setActiveLectureItem] = useState(null);
   const [pendingPart, setPendingPart] = useState(null);
   const [targetPaymentItem, setTargetPaymentItem] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
@@ -42,7 +47,7 @@ export default function CourseDetail() {
   const selectedSection = course.sections?.find((s) => s.id === activeTab) || course.sections?.[0];
 
   const toggleModule = (moduleId) => {
-    setExpandedModule((prev) => (prev === moduleId ? null : moduleId));
+    setSelectedModuleId((prev) => ((prev ?? course.modules?.[0]?.id) === moduleId ? null : moduleId));
   };
 
   /**
@@ -66,27 +71,17 @@ export default function CourseDetail() {
       return;
     }
 
-    // Case 3: User is authenticated and subscribed -> Grant immediate access
-    if (part?.url) {
-      window.open(part.url, '_blank');
-    } else {
-      const label = part?.file || part?.name || part?.title || 'Lecture Content';
-      const typeLabel = part?.type === 'mp4' ? 'Video Lecture' : 'Course Material';
-      setToastMessage(`✓ ${typeLabel} Unlocked: "${label}" ready for your subscribed account.`);
-      setTimeout(() => setToastMessage(null), 4500);
-    }
+    // Case 3: User is authenticated and subscribed -> Launch EdTech Lecture/Notes Player Modal!
+    setActiveLectureItem(part);
+    setLectureModalOpen(true);
   };
 
   // Called when user finishes authentication (Sign In or Sign Up)
   const handleAuthSuccess = () => {
     if (isSubscribed) {
-      // If already subscribed under this account, grant access to pending file
-      if (pendingPart?.url) {
-        window.open(pendingPart.url, '_blank');
-      } else if (pendingPart) {
-        const label = pendingPart?.file || pendingPart?.name || pendingPart?.title || 'Material';
-        setToastMessage(`Welcome back! Access Granted to ${label}.`);
-        setTimeout(() => setToastMessage(null), 4500);
+      if (pendingPart) {
+        setActiveLectureItem(pendingPart);
+        setLectureModalOpen(true);
       }
       setPendingPart(null);
     } else {
@@ -103,12 +98,38 @@ export default function CourseDetail() {
     setToastMessage(`🎉 Payment Verified! Full course access is unlocked for ${user?.email}.`);
     setTimeout(() => setToastMessage(null), 5000);
 
-    // If user clicked a specific document before paying, open it
-    if (targetPaymentItem?.url) {
-      window.open(targetPaymentItem.url, '_blank');
+    // If user clicked a specific lecture/doc before paying, launch it
+    if (targetPaymentItem) {
+      setActiveLectureItem(targetPaymentItem);
+      setLectureModalOpen(true);
     }
     setTargetPaymentItem(null);
   };
+
+  if (loading) {
+    return (
+      <div className="course-detail-page">
+        <div className="detail-container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+          <p style={{ color: '#94a3b8' }}>Loading course curriculum from database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!course || !course.id) {
+    return (
+      <div className="course-detail-page">
+        <div className="detail-container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+          <h2 style={{ marginBottom: '1rem' }}>Course Not Found</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>The requested course could not be located in the catalog.</p>
+          <Link to="/" className="btn-back" style={{ display: 'inline-flex' }}>
+            <ArrowLeft size={16} />
+            <span>Back to Courses</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Helper to check if current tab has module data
   const hasModuleDataForTab =
@@ -118,6 +139,7 @@ export default function CourseDetail() {
 
   return (
     <div className="course-detail-page">
+
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div className="course-floating-toast">
@@ -493,6 +515,23 @@ export default function CourseDetail() {
         course={course}
         targetItem={targetPaymentItem}
         onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* EdTech Lecture Player / Notes Viewer Modal */}
+      <LectureModal
+        isOpen={lectureModalOpen}
+        onClose={() => {
+          setLectureModalOpen(false);
+          setActiveLectureItem(null);
+        }}
+        item={activeLectureItem}
+        courseTitle={course?.title || 'Course'}
+        moduleTitle={
+          course?.modules?.find((m) =>
+            m.parts?.some((p) => p.id === activeLectureItem?.id) ||
+            m.videos?.some((v) => v.id === activeLectureItem?.id)
+          )?.title || 'Course Module'
+        }
       />
     </div>
   );

@@ -1,15 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Star, User, LogIn, LogOut, ChevronDown, ShieldCheck } from 'lucide-react';
+import { GraduationCap, Star, LogIn, LogOut, ChevronDown, ShieldCheck, FolderPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
+import AddCourseModal from './AddCourseModal';
 
 export default function Navbar({ onOpenReview }) {
     const location = useLocation();
     const { user, logout } = useAuth();
     const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -94,6 +97,17 @@ export default function Navbar({ onOpenReview }) {
 
                     {/* Actions Area: Review Button & User Profile / Login (Uncluttered layout) */}
                     <div className="nav-actions">
+                        <button
+                            className="btn-review"
+                            onClick={() => setIsAddCourseOpen(true)}
+                            id="navbar-add-course-btn"
+                            title="Add new course with Google Drive resources to database"
+                            style={{ background: 'rgba(5, 150, 105, 0.15)', borderColor: '#059669', color: '#34d399' }}
+                        >
+                            <FolderPlus size={15} color="#34d399" />
+                            <span>Add Course</span>
+                        </button>
+
                         <button className="btn-review" onClick={onOpenReview} id="navbar-review-btn">
                             <Star size={15} fill="#34d399" />
                             <span>Leave a Review</span>
@@ -169,6 +183,12 @@ export default function Navbar({ onOpenReview }) {
             <AuthModal
                 isOpen={isAuthOpen}
                 onClose={() => setIsAuthOpen(false)}
+            />
+
+            {/* Add Course & Drive Resources Modal */}
+            <AddCourseModal
+                isOpen={isAddCourseOpen}
+                onClose={() => setIsAddCourseOpen(false)}
             />
         </>
     );

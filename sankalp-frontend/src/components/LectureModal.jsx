@@ -20,6 +20,7 @@ export default function LectureModal({
 
   const isVideo = item.type === 'mp4' || Boolean(item.duration);
   const resourceUrl = item.url || '';
+  const isFolder = resourceUrl.includes('/folders/');
 
   // Determine embed type
   const isGoogleDrivePreview =
@@ -152,6 +153,50 @@ export default function LectureModal({
                 allow="autoplay; fullscreen"
                 allowFullScreen
               />
+            ) : isFolder ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem', maxWidth: '520px' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '16px',
+                    background: 'rgba(52, 211, 153, 0.15)',
+                    color: '#34d399',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1.25rem',
+                  }}
+                >
+                  <BookOpen size={30} />
+                </div>
+                <h4 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.6rem' }}>
+                  Course Material Folder
+                </h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  Lecture slides and resources for this module are organized in the official Google Drive Course Folder.
+                </p>
+                <a
+                  href={resourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.65rem 1.25rem',
+                    background: '#059669',
+                    color: '#ffffff',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>Browse Folder on Google Drive</span>
+                  <ExternalLink size={16} />
+                </a>
+              </div>
             ) : (
               <iframe
                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(resourceUrl)}&embedded=true`}

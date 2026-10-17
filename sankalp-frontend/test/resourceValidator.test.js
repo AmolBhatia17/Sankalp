@@ -32,6 +32,14 @@ describe('Google Drive URL Parser & Formatter', () => {
     const preview = formatDrivePreviewUrl(url);
     assert.strictEqual(preview, 'https://drive.google.com/file/d/1EX-AE58aj8nca_SWwprAcbE4av1RkSv4/preview');
   });
+
+  test('extracts folder ID and preserves folder URLs', () => {
+    const folderUrl = 'https://drive.google.com/drive/u/2/folders/1Y3fQsTAatAgDIElJWieuoYj55ucfGjwk';
+    const folderId = extractDriveFileId(folderUrl);
+    assert.strictEqual(folderId, '1Y3fQsTAatAgDIElJWieuoYj55ucfGjwk');
+    const preserved = formatDrivePreviewUrl(folderUrl);
+    assert.strictEqual(preserved, folderUrl);
+  });
 });
 
 describe('Resource Schema Validation', () => {

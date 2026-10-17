@@ -27,6 +27,7 @@ export function extractDriveFileId(url) {
     /\/presentation\/d\/([a-zA-Z0-9_-]+)/,
     /\/document\/d\/([a-zA-Z0-9_-]+)/,
     /\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/,
+    /\/folders\/([a-zA-Z0-9_-]+)/,
   ];
 
   for (const pattern of patterns) {
@@ -43,6 +44,9 @@ export function extractDriveFileId(url) {
  * Formats a Google Drive URL into an embeddable preview URL.
  */
 export function formatDrivePreviewUrl(url) {
+  if (url && (url.includes('/folders/') || url.includes('/drive/folders/'))) {
+    return url;
+  }
   const fileId = extractDriveFileId(url);
   if (!fileId) return url;
   return `https://drive.google.com/file/d/${fileId}/preview`;

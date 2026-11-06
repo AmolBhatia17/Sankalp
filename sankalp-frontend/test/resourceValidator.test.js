@@ -5,7 +5,6 @@ import {
   formatDrivePreviewUrl,
   validateResource,
   detectDuplicates,
-  KNOWN_COURSE_IDS,
 } from '../src/lib/resourceValidator.js';
 
 describe('Google Drive URL Parser & Formatter', () => {

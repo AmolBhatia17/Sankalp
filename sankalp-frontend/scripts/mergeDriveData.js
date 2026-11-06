@@ -3,7 +3,7 @@
  *
  * Merges raw Google Drive links from drive_data.csv into:
  *   1. database/manifest_template.csv (Production Resource Manifest)
- *   2. src/data/mockCourses.js (Offline Fallback & Firebase Seed Source)
+ *   2. Private resource data remains outside the public course catalog
  *   3. database/seed_resources.sql (PostgreSQL Production Seed SQL)
  *   4. database/seed_resources_mysql.sql (MySQL Production Seed SQL)
  *
@@ -31,7 +31,6 @@ const frontendDir = resolve(__dirname, '..');
 // File paths
 const driveCsvPath = resolve(rootDir, 'drive_data.csv');
 const manifestPath = resolve(frontendDir, 'database/manifest_template.csv');
-const mockCoursesPath = resolve(frontendDir, 'src/data/mockCourses.js');
 const pgSeedPath = resolve(frontendDir, 'database/seed_resources.sql');
 const mySqlSeedPath = resolve(frontendDir, 'database/seed_resources_mysql.sql');
 
@@ -171,44 +170,6 @@ export function generateUpdatedCsv(mappedResources) {
   return rows.join('\n') + '\n';
 }
 
-export function updateMockCoursesData(currentCourses, mappedResources) {
-  const resourceMap = new Map();
-  for (const r of mappedResources) {
-    resourceMap.set(r.resource_id, r);
-  }
-
-  // Deep clone to safely manipulate
-  const cloned = JSON.parse(JSON.stringify(currentCourses));
-
-  for (const course of cloned) {
-    if (!course.modules) continue;
-    for (const mod of course.modules) {
-      // Update parts
-      if (mod.parts) {
-        for (const part of mod.parts) {
-          const match = resourceMap.get(part.id);
-          if (match && match.drive_url) {
-            part.url = match.drive_url;
-            part.driveFileId = match.drive_file_id;
-          }
-        }
-      }
-      // Update videos
-      if (mod.videos) {
-        for (const vid of mod.videos) {
-          const match = resourceMap.get(vid.id);
-          if (match && match.drive_url) {
-            vid.url = match.drive_url;
-            vid.driveFileId = match.drive_file_id;
-          }
-        }
-      }
-    }
-  }
-
-  return `export const mockCourses = ${JSON.stringify(cloned, null, 2)};\n`;
-}
-
 export function generatePgSqlSeeds(mappedResources, courses) {
   const lines = [];
   lines.push('-- ====================================================================');
@@ -327,10 +288,7 @@ async function main() {
     writeFileSync(manifestPath, newManifestCsv, 'utf8');
     console.log(`✓ Successfully updated manifest_template.csv`);
 
-    console.log(`Updating local fallback courses catalog: ${mockCoursesPath}...`);
-    const newMockCoursesCode = updateMockCoursesData(mockCourses, mappedResources);
-    writeFileSync(mockCoursesPath, newMockCoursesCode, 'utf8');
-    console.log(`✓ Successfully updated src/data/mockCourses.js with live preview URLs`);
+    console.log('Skipping public course catalog: resource URLs remain private.');
 
     console.log(`Writing PostgreSQL seed file: ${pgSeedPath}...`);
     const pgSql = generatePgSqlSeeds(mappedResources, mockCourses);

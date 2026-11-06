@@ -38,18 +38,28 @@ describe('Manifest Parser and Integrity Verification', () => {
     assert.strictEqual(rv.length, 33);
   });
 
-  test('preserves existing mockCourses structure with 22 total modules', () => {
+  test('keeps public mockCourses metadata-only', () => {
     assert.strictEqual(mockCourses.length, 3);
 
-    const totalModules = mockCourses.reduce((sum, c) => sum + (c.modules?.length || 0), 0);
-    assert.strictEqual(totalModules, 22);
+    const expectedIds = ['embedded-systems', 'cad-designing', 'robot-vision'];
+    assert.deepStrictEqual(
+      mockCourses.map((course) => course.id).sort(),
+      expectedIds.sort()
+    );
 
-    const es = mockCourses.find((c) => c.id === 'embedded-systems');
-    const cad = mockCourses.find((c) => c.id === 'cad-designing');
-    const rv = mockCourses.find((c) => c.id === 'robot-vision');
+    for (const course of mockCourses) {
+      assert.strictEqual(
+        Object.hasOwn(course, 'modules'),
+        false,
+        `Public course ${course.id} must not contain modules`
+      );
+    }
 
-    assert.strictEqual(es.modules.length, 5);
-    assert.strictEqual(cad.modules.length, 7);
-    assert.strictEqual(rv.modules.length, 10);
+    const publicCatalog = JSON.stringify(mockCourses);
+    assert.doesNotMatch(
+      publicCatalog,
+      /https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|drive\/u\/\d+\/folders\/)/
+    );
+    assert.doesNotMatch(publicCatalog, /driveFileId|drive_file_id/);
   });
 });

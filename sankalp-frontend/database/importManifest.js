@@ -9,6 +9,8 @@
  * Default is ALWAYS --dry-run. No database writes happen unless --commit is explicitly passed.
  */
 
+import process from 'node:process';
+
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -16,7 +18,6 @@ import {
   validateResource,
   detectDuplicates,
   extractDriveFileId,
-  formatDrivePreviewUrl,
   KNOWN_COURSE_IDS,
 } from '../src/lib/resourceValidator.js';
 

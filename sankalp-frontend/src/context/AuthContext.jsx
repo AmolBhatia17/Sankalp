@@ -1,22 +1,18 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 
-const AuthContext = createContext(null);
+import { AuthContext } from './AuthContextBase';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(auth));
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(!auth);
   const authCheckRequest = useRef(0);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      setAdminCheckComplete(true);
-      return undefined;
-    }
+    if (!auth) return undefined;
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -85,16 +81,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  return context || {
-    user: null,
-    loading: false,
-    isAdmin: false,
-    adminCheckComplete: true,
-    logout: async () => {},
-  };
 }

@@ -7,7 +7,7 @@ import AddCourseModal from './AddCourseModal';
 
 export default function Navbar({ onOpenReview }) {
     const location = useLocation();
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin, loading, adminCheckComplete } = useAuth();
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -69,7 +69,7 @@ export default function Navbar({ onOpenReview }) {
                         </Link>
 
                         {/* Status pill next to brand */}
-                        <div 
+                        <div
                             className={`brand-status-pill ${user ? 'status-logged-in' : 'status-guest'}`}
                             onClick={() => !user && setIsAuthOpen(true)}
                             title={user ? `Logged in as ${user.displayName || user.email}` : 'Browsing as Guest (Click to Sign In)'}
@@ -97,16 +97,18 @@ export default function Navbar({ onOpenReview }) {
 
                     {/* Actions Area: Review Button & User Profile / Login (Uncluttered layout) */}
                     <div className="nav-actions">
-                        <button
-                            className="btn-review"
-                            onClick={() => setIsAddCourseOpen(true)}
-                            id="navbar-add-course-btn"
-                            title="Add new course with Google Drive resources to database"
-                            style={{ background: 'rgba(5, 150, 105, 0.15)', borderColor: '#059669', color: '#34d399' }}
-                        >
-                            <FolderPlus size={15} color="#34d399" />
-                            <span>Add Course</span>
-                        </button>
+                        {adminCheckComplete && !loading && isAdmin && (
+                            <button
+                                className="btn-review"
+                                onClick={() => setIsAddCourseOpen(true)}
+                                id="navbar-add-course-btn"
+                                title="Add new course with Google Drive resources to database"
+                                style={{ background: 'rgba(5, 150, 105, 0.15)', borderColor: '#059669', color: '#34d399' }}
+                            >
+                                <FolderPlus size={15} color="#34d399" />
+                                <span>Add Course</span>
+                            </button>
+                        )}
 
                         <button className="btn-review" onClick={onOpenReview} id="navbar-review-btn">
                             <Star size={15} fill="#34d399" />
@@ -186,10 +188,12 @@ export default function Navbar({ onOpenReview }) {
             />
 
             {/* Add Course & Drive Resources Modal */}
-            <AddCourseModal
-                isOpen={isAddCourseOpen}
-                onClose={() => setIsAddCourseOpen(false)}
-            />
+            {adminCheckComplete && !loading && isAdmin && (
+                <AddCourseModal
+                    isOpen={isAddCourseOpen}
+                    onClose={() => setIsAddCourseOpen(false)}
+                />
+            )}
         </>
     );
-}
+}

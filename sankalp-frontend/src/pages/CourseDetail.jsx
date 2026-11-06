@@ -41,7 +41,7 @@ export default function CourseDetail() {
   const [toastMessage, setToastMessage] = useState(null);
 
   const { user } = useAuth();
-  const { isCourseSubscribed, subscribeCourse } = useSubscription();
+  const { isCourseSubscribed } = useSubscription();
   const isSubscribed = isCourseSubscribed(course.id);
 
   const selectedSection = course.sections?.find((s) => s.id === activeTab) || course.sections?.[0];
@@ -90,20 +90,6 @@ export default function CourseDetail() {
       setPendingPart(null);
       setPaymentOpen(true);
     }
-  };
-
-  // Called when Razorpay payment succeeds
-  const handlePaymentSuccess = (paymentData) => {
-    subscribeCourse(course.id, paymentData);
-    setToastMessage(`🎉 Payment Verified! Full course access is unlocked for ${user?.email}.`);
-    setTimeout(() => setToastMessage(null), 5000);
-
-    // If user clicked a specific lecture/doc before paying, launch it
-    if (targetPaymentItem) {
-      setActiveLectureItem(targetPaymentItem);
-      setLectureModalOpen(true);
-    }
-    setTargetPaymentItem(null);
   };
 
   if (loading) {
@@ -514,7 +500,6 @@ export default function CourseDetail() {
         }}
         course={course}
         targetItem={targetPaymentItem}
-        onPaymentSuccess={handlePaymentSuccess}
       />
 
       {/* EdTech Lecture Player / Notes Viewer Modal */}

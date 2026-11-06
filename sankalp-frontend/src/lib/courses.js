@@ -8,10 +8,26 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { db, auth } from '../firebase/firebaseConfig';
+import { getIdTokenResult } from 'firebase/auth';
 import { mockCourses } from '../data/mockCourses';
 
 const COURSES_COLLECTION = 'courses';
+
+async function requireAdmin() {
+  const currentUser = auth?.currentUser;
+
+  if (!currentUser) {
+    throw new Error('You must sign in with an administrator account.');
+  }
+
+  const tokenResult = await getIdTokenResult(currentUser, true);
+
+  if (tokenResult.claims.admin !== true) {
+    throw new Error('Administrator permission is required for this operation.');
+  }
+}
+
 
 /**
  * Normalizes course ID to a URL-friendly slug
@@ -115,9 +131,9 @@ export async function getCourseById(id) {
 /**
  * Adds or updates a course in Firestore.
  */
-export async function saveCourse(courseData) {
+async function saveCourseAsAdmin(courseData) {
   if (!db) {
-    throw new Error('Firebase Firestore is not initialized. Check VITE_FIREBASE_API_KEY in .env');
+    throw new Error('Firebase Firestore is not initialized.');
   }
 
   const id = courseData.id || slugify(courseData.title);
@@ -137,10 +153,16 @@ export async function saveCourse(courseData) {
   return id;
 }
 
+export async function saveCourse(courseData) {
+  await requireAdmin();
+  return saveCourseAsAdmin(courseData);
+}
+
 /**
  * Deletes a course from Firestore.
  */
 export async function deleteCourse(id) {
+  await requireAdmin();
   if (!db) {
     throw new Error('Firebase Firestore is not initialized.');
   }
@@ -152,12 +174,10 @@ export async function deleteCourse(id) {
  * Helper to batch seed initial catalog into Firestore if needed.
  */
 export async function seedInitialCourses(courses = mockCourses) {
-  if (!db) {
-    throw new Error('Firebase Firestore is not initialized.');
-  }
+  await requireAdmin();
 
   for (const course of courses) {
-    await saveCourse(course);
+    await saveCourseAsAdmin(course);
   }
   return true;
 }

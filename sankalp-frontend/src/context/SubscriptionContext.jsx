@@ -1,108 +1,76 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
+import { useEffect, useMemo, useState } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import { useAuth } from './useAuth';
+import { SubscriptionContext } from './SubscriptionContextBase';
 
-const SubscriptionContext = createContext(null);
+const EMPTY_SUBSCRIPTIONS = [];
 
 export function SubscriptionProvider({ children }) {
   const { user } = useAuth();
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [loadingSubscriptions, setLoadingSubscriptions] = useState(true);
+  const [subscriptionState, setSubscriptionState] = useState({
+    uid: null,
+    subscriptions: [],
+    loading: true,
+  });
 
-  // Sync subscriptions whenever authenticated user changes
   useEffect(() => {
-    if (!user) {
-      setSubscriptions([]);
-      setLoadingSubscriptions(false);
-      return;
-    }
+    if (!user?.uid || !db) return undefined;
 
-    try {
-      // Secure local store isolated per user UID
-      const storageKey = `sankalp_sub_${user.uid}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setSubscriptions(Array.isArray(parsed) ? parsed : []);
-      } else {
-        setSubscriptions([]);
+    const uid = user.uid;
+    const enrollmentQuery = query(
+      collection(db, 'enrollments'),
+      where('uid', '==', uid),
+      where('status', '==', 'active')
+    );
+
+    return onSnapshot(
+      enrollmentQuery,
+      (snapshot) => {
+        setSubscriptionState({
+          uid,
+          subscriptions: snapshot.docs.map((item) => ({
+            id: item.id,
+            ...item.data(),
+          })),
+          loading: false,
+        });
+      },
+      (error) => {
+        console.error('Could not load enrollments:', error);
+        setSubscriptionState({
+          uid,
+          subscriptions: [],
+          loading: false,
+        });
       }
-    } catch (e) {
-      console.error('Failed to load user subscriptions:', e);
-      setSubscriptions([]);
-    } finally {
-      setLoadingSubscriptions(false);
-    }
-  }, [user]);
+    );
+  }, [user?.uid]);
 
-  // Check if current user has an active subscription for this course
-  const isCourseSubscribed = (courseId) => {
-    if (!user) return false;
-    return subscriptions.some(sub => sub.courseId === courseId || sub === courseId);
-  };
+  const currentState =
+    user?.uid && db && subscriptionState.uid === user.uid
+      ? subscriptionState
+      : null;
 
-  // Record a verified purchase
-  const subscribeCourse = (courseId, paymentData = {}) => {
-    if (!user) return false;
+  const subscriptions = currentState?.subscriptions ?? EMPTY_SUBSCRIPTIONS;
+  const loadingSubscriptions = Boolean(
+    user?.uid && db && (!currentState || currentState.loading)
+  );
 
-    const newRecord = {
-      courseId,
-      userId: user.uid,
-      userEmail: user.email,
-      purchasedAt: new Date().toISOString(),
-      paymentId: paymentData.paymentId || `pay_sim_${Date.now()}`,
-      orderId: paymentData.orderId || `order_${Date.now()}`,
-      status: 'active',
-      amount: paymentData.amount || 0,
-    };
-
-    const updated = [...subscriptions.filter(s => (s.courseId || s) !== courseId), newRecord];
-    setSubscriptions(updated);
-
-    try {
-      const storageKey = `sankalp_sub_${user.uid}`;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to persist subscription:', e);
-    }
-
-    return true;
-  };
-
-  // Utility to revoke for testing
-  const resetCourseSubscription = (courseId) => {
-    if (!user) return;
-    const updated = subscriptions.filter(s => (s.courseId || s) !== courseId);
-    setSubscriptions(updated);
-    try {
-      const storageKey = `sankalp_sub_${user.uid}`;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to reset subscription:', e);
-    }
-  };
+  const value = useMemo(() => ({
+    subscriptions,
+    loadingSubscriptions,
+    isCourseSubscribed: (courseId) =>
+      subscriptions.some(
+        (item) => item.courseId === courseId && item.status === 'active'
+      ),
+    subscribeCourse: () => false,
+    resetCourseSubscription: () => {},
+  }), [subscriptions, loadingSubscriptions]);
 
   return (
-    <SubscriptionContext.Provider
-      value={{
-        subscriptions,
-        loadingSubscriptions,
-        isCourseSubscribed,
-        subscribeCourse,
-        resetCourseSubscription,
-      }}
-    >
+    <SubscriptionContext.Provider value={value}>
       {children}
     </SubscriptionContext.Provider>
   );
-}
-
-export function useSubscription() {
-  const context = useContext(SubscriptionContext);
-  return context || {
-    subscriptions: [],
-    loadingSubscriptions: false,
-    isCourseSubscribed: () => false,
-    subscribeCourse: () => false,
-    resetCourseSubscription: () => {},
-  };
 }

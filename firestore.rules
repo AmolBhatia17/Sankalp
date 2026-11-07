@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function isEnrolled(courseId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid + "_" + courseId))
+        && get(/databases/$(database)/documents/enrollments/$(request.auth.uid + "_" + courseId)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/enrollments/$(request.auth.uid + "_" + courseId)).data.courseId == courseId
+        && get(/databases/$(database)/documents/enrollments/$(request.auth.uid + "_" + courseId)).data.status == "active";
+    }
+
+    match /courses/{courseId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /courseResources/{courseId} {
+      allow read: if isAdmin() || isEnrolled(courseId);
+      allow write: if isAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow read: if isSignedIn()
+        && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /paymentOrders/{orderId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

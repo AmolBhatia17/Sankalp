@@ -12,31 +12,64 @@ import {
   Database,
 } from 'lucide-react';
 import { saveCourse, slugify, seedInitialCourses } from '../lib/courses';
-import { db } from '../firebase/firebaseConfig';
+import { app, db } from '../firebase/firebaseConfig';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
   const [loading, setLoading] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [migrationFile, setMigrationFile] = useState(null);
   const [seedStatus, setSeedStatus] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Sync existing mock catalog to live Firestore
+  // Migrate private course resources from the selected JSON file
   const handleSyncAllExistingSubjects = async () => {
-    if (!db) {
-      setError('Firebase Firestore is not initialized. Please configure VITE_FIREBASE_API_KEY in .env');
+    if (!db || !app) {
+      setError('Firebase is not configured.');
       return;
     }
+
+    if (!migrationFile) {
+      setError('Please select courseResources.migration.json first.');
+      return;
+    }
+
     setSeeding(true);
     setError('');
-    setSeedStatus('Syncing Embedded Systems, CAD Designing & Robot Vision to Firestore...');
+    setSeedStatus('Reading migration file...');
+
     try {
+      const courses = JSON.parse(await migrationFile.text());
+
+      if (!Array.isArray(courses) || courses.length !== 3) {
+        throw new Error('The migration file must contain exactly three courses.');
+      }
+
+      const totalModules = courses.reduce(
+        (sum, course) => sum + (Array.isArray(course.modules) ? course.modules.length : 0),
+        0
+      );
+
+      if (totalModules !== 22) {
+        throw new Error(`Expected 22 modules, found ${totalModules}.`);
+      }
+
+      setSeedStatus('Seeding public course metadata...');
       await seedInitialCourses();
-      setSeedStatus('✓ All 3 site subjects with all 22 modules, notes, and video lectures have been written to the database!');
-      setTimeout(() => setSeedStatus(''), 5000);
+
+      setSeedStatus('Uploading protected course resources...');
+      const functions = getFunctions(app, 'asia-south1');
+      const migrate = httpsCallable(functions, 'migrateCourseResources');
+      const result = await migrate({ courses });
+
+      const data = result.data;
+      setSeedStatus(
+        `Migration complete: ${data.coursesMigrated} courses and ${data.modulesMigrated} modules uploaded.`
+      );
     } catch (err) {
-      console.error('Sync error:', err);
-      setError(err.message || 'Failed to sync courses to database.');
+      console.error('Resource migration failed:', err);
+      setError(err.message || 'Resource migration failed.');
     } finally {
       setSeeding(false);
     }
@@ -258,20 +291,27 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
         </div>
 
         {/* One-Click Sync Existing Site Subjects */}
-        <div style={{ background: 'rgba(5, 150, 105, 0.12)', border: '1px solid #059669', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div style={{ fontWeight: 600, color: '#34d399', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Database size={16} />
-              <span>Sync All Site Subjects to Database</span>
-            </div>
-            <p style={{ color: '#cbd5e1', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-              One-click write to Firestore: Seeds Embedded Systems, CAD Designing & Robot Vision with all 22 modules, notes, and videos.
-            </p>
+        <div style={{ background: 'rgba(5, 150, 105, 0.12)', border: '1px solid #059669', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+          <div style={{ fontWeight: 600, color: '#34d399', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Database size={16} />
+            <span>Secure Course Resource Migration</span>
           </div>
+          <p style={{ color: '#cbd5e1', fontSize: '0.8rem', margin: '0.5rem 0' }}>
+            Select the private migration JSON. Course metadata is seeded publicly; modules and resource links are uploaded separately to protected Firestore storage.
+          </p>
+          <input
+            type="file"
+            accept=".json,application/json"
+            onChange={(e) => setMigrationFile(e.target.files?.[0] || null)}
+            style={{ display: 'block', color: '#fff', margin: '0.75rem 0' }}
+          />
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+            {migrationFile ? migrationFile.name : 'No migration file selected'}
+          </p>
           <button
             type="button"
             onClick={handleSyncAllExistingSubjects}
-            disabled={seeding}
+            disabled={seeding || !migrationFile}
             style={{
               background: '#059669',
               color: '#fff',
@@ -280,11 +320,11 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
               borderRadius: '8px',
               fontSize: '0.82rem',
               fontWeight: 600,
-              cursor: 'pointer',
-              opacity: seeding ? 0.7 : 1,
+              cursor: seeding || !migrationFile ? 'not-allowed' : 'pointer',
+              opacity: seeding || !migrationFile ? 0.7 : 1,
             }}
           >
-            {seeding ? 'Syncing...' : 'Sync All to Firestore'}
+            {seeding ? 'Migrating...' : 'Migrate Protected Resources'}
           </button>
         </div>
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, BookOpen, ShieldCheck, Zap } from 'lucide-react';
 
 export default function Hero() {

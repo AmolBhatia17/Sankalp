@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Star, Send } from 'lucide-react';
 
 export default function ReviewModal({ isOpen, onClose }) {
